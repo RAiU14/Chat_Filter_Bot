@@ -53,6 +53,9 @@ def file_write(word, gen_word):
             csvwriter = csv.writer(writingcsvfile)
             csvwriter.writerow(['Word', 'Similars'])
             csvwriter.writerow([word, gen_word])
+        with open(filename, 'a', encoding='UTF-8', newline='') as appendingcsvfile:
+            csvwriter = csv.writer(appendingcsvfile)
+            csvwriter.writerow([word, [word.lower(), word.upper()]])
 
 
 def file_read_word(word):
