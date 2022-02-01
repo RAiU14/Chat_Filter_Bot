@@ -125,7 +125,7 @@ def word_add_to_list(serverid, word):
 # Main function connecting from the bot command to -
 # Check if word is present in the list if parameter is passed. If no parameters are passed, return all the contents in the csv file.
 def word_check_list(serverid, word=None):
-    file_name = file_name_existing_check(serverid)
+    file_name = file_existing_check(serverid)
     if word:
         if file_name:
             word_check_status = file_read_word(word)
