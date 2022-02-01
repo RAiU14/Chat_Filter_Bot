@@ -1,4 +1,5 @@
 # Fixed Random Word Generator
+import discord
 import itertools
 import csv
 import os
@@ -20,8 +21,9 @@ filename = "saved_word.csv"
 fieldname = ['Word', 'Similars']
 
 
+# Recheck this code, it kinda feels stupid
 def file_name_existing_check(serverid):
-    file_name = serverid+"saved_word.csv"
+    file_name = serverid + "saved_word.csv"
     file_present = False
     if os.path.isfile(filename):
         file_present = True
@@ -38,7 +40,7 @@ def combine1(tpl):
     return t
 
 
-def fwrite(word, gen_word):
+def file_write(word, gen_word):
     file_present = False
     if os.path.isfile(filename):
         file_present = True
@@ -64,7 +66,7 @@ def file_read_word(word):
                 if word in line[0]:
                     status = "Existing Word!"
                 else:
-                    wgen(word)
+                    word_generator(word)
                     status = "Word does not exist, will be created instead!"
     return status
 
@@ -82,22 +84,28 @@ def file_read_all():
     return contents
 
 
-def wgen(word):
+def word_generator(word):
     temp = []
     for each_letter in word.lower():
         temp.append(special_letters[each_letter])
     new_word = list(map(combine1, itertools.product(*temp)))
-    fwrite(word, new_word)
+    file_write(word, new_word)
 
 
-def word_filter_list_check(serverid, word=None):
+# Function call: Check if word is present in the list if parameter is passed. If no parameters are passed, return all the contents in the csv file.
+def word_filter_list(serverid, word=None):
     file_name = file_name_existing_check(serverid)
     if word:
         if file_name:
-            file_read_word(word)
+            return True
     else:
-        file_read_all()
-    return
+        word_list = ''
+        words = file_read_all()  # words will have list value. Discord Embed needs string values.
+        for item in words:
+            word_list += item
+        embed = discord.Embed(title="Words in List:", description="All the available word in this server:", colour=discord.Color.blue())
+        embed.add_field(name="", value=word_list)
+        return word_list
 
 
-wgen("two")
+word_generator("two")

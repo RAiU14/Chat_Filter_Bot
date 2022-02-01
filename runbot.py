@@ -1,7 +1,11 @@
+import discord
+
+import words
 from imports import *
 from discord.ext import commands
 from dotenv import load_dotenv
 
+# Create a .env file and add your discord token as DISCORD_TOKEN for the bot to run. Package for dotevn have to be installed as well
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
@@ -45,6 +49,13 @@ async def wfilter(ctx):
     if await athchk(ctx):
         return
     else:
+        serverid = ctx.message.guild.id
+        word_list = words.word_filter_list(serverid)
+        if word_list is True:
+            ctx.reply("Word already exist!")
+        else:
+            await ctx.reply("Contents are -")
+            await ctx.send(word_list)
         return
 
 
