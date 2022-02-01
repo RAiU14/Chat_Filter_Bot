@@ -21,16 +21,10 @@ filename = "saved_word.csv"
 fieldname = ['Word', 'Similars']
 
 
-# Recheck this code, it kinda feels stupid
-def file_name_existing_check(serverid):
+# Checking if server based CSV file exists or not.
+def file_existing_check(serverid):
     file_name = serverid + "saved_word.csv"
-    file_present = False
-    if os.path.isfile(filename):
-        file_present = True
-    if file_present:
-        return file_name
-    else:
-        return False
+    return file_name
 
 
 def combine1(tpl):
@@ -40,24 +34,40 @@ def combine1(tpl):
     return t
 
 
+# Appending lowercase/uppercase word possibility to the list.
+def append_word(exword):
+    # Appending possible lower case and uppercase word to the file.
+    with open(filename, 'a', encoding='UTF-8', newline='') as appendingcsvfile:
+        csvwriter = csv.writer(appendingcsvfile)
+        csvwriter.writerow([exword, [exword.lower(), exword.upper()]])
+
+
+# Writing/Appending contents to new/existing file
 def file_write(word, gen_word):
+    write_status = ""
     file_present = False
     if os.path.isfile(filename):
         file_present = True
     if file_present:
+        # Appending new word
         with open(filename, 'a', encoding='UTF-8', newline="") as appendingcsvfile:
             csvwriter = csv.writer(appendingcsvfile)
             csvwriter.writerow([word, gen_word])
+        append_word(word)
+        write_status = "Word added successfully!"
+        return write_status
     else:
+        # Writing the new contents to the file if not already existing.
         with open(filename, 'w', encoding='UTF-8', newline="") as writingcsvfile:
             csvwriter = csv.writer(writingcsvfile)
             csvwriter.writerow(['Word', 'Similars'])
             csvwriter.writerow([word, gen_word])
-        with open(filename, 'a', encoding='UTF-8', newline='') as appendingcsvfile:
-            csvwriter = csv.writer(appendingcsvfile)
-            csvwriter.writerow([word, [word.lower(), word.upper()]])
+        append_word(word)
+        write_status = "No existing list in this server. New file created and word have been added!"
+        return write_status
 
 
+# Reading contents of the word
 def file_read_word(word):
     file_present = False
     if os.path.isfile(filename):
@@ -67,13 +77,14 @@ def file_read_word(word):
             csvreader = csv.reader(readingcsvfile)
             for line in list(csvreader):
                 if word in line[0]:
-                    status = "Existing Word!"
+                    status = True
                 else:
                     word_generator(word)
-                    status = "Word does not exist, will be created instead!"
+                    status = False
     return status
 
 
+# Reading all the contents in the CSV file.
 def file_read_all():
     file_present = False
     contents = []
@@ -87,28 +98,49 @@ def file_read_all():
     return contents
 
 
+# Generate possible word combinations
 def word_generator(word):
     temp = []
     for each_letter in word.lower():
         temp.append(special_letters[each_letter])
     new_word = list(map(combine1, itertools.product(*temp)))
-    file_write(word, new_word)
+    write_status = file_write(word, new_word)  # Calling file writing function here
+    return write_status
 
 
-# Function call: Check if word is present in the list if parameter is passed. If no parameters are passed, return all the contents in the csv file.
-def word_filter_list(serverid, word=None):
+# Main function connecting from the bot command to -
+# Check if word is present in the list if parameter is passed. If no parameters are passed, return all the contents in the csv file.
+def word_check_list(serverid, word=None):
     file_name = file_name_existing_check(serverid)
     if word:
         if file_name:
-            return True
+            word_check_status = file_read_word(word)
+            if word_check_status:
+                embed = discord.Embed(title=f"{word} is already present:", description="This word is already present in the filter list.", colour=discord.Color.green())
+                return embed
+            else:
+                embed = discord.Embed(title=f"{word} is not present:", description="This word is not present in the filter list!", colour=discord.Color.red())
+            return embed
     else:
         word_list = ''
         words = file_read_all()  # words will have list value. Discord Embed needs string values.
         for item in words:
             word_list += item
-        embed = discord.Embed(title="Words in List:", description="All the available word in this server:", colour=discord.Color.blue())
+        embed = discord.Embed(title="Available in List:", description="All the available word in this server:", colour=discord.Color.blue())
         embed.add_field(name="", value=word_list)
-        return word_list
+        return embed
 
 
-word_generator("two")
+# Main function connecting from the bot command to -
+# Add word as well as it's combination to the list on CSV file
+def word_add_to_list(serverid, word):
+    get_filename = file_existing_check(serverid)
+    if get_filename:
+        status = word_generator(word)
+    else:
+        status = False
+    if status:
+        embed = discord.Embed(title="Sucess!", description=f"{status}", colour=discord.Color.green())
+        return embed
+    else:
+        print("Error occured while writing to file!")
