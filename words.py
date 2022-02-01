@@ -3,7 +3,6 @@ import discord
 import itertools
 import csv
 import os
-
 special_letters = {'a': ['A', 'a', 'ā', 'æ', 'ã', 'å', 'ā', 'à', 'á', 'â', 'ä', 'Ā', 'Ã', 'Å', 'Ā', 'À', 'Á', 'Â', 'Ä'],
                    'b': ['B', 'b'], 'c': ['C', 'c', 'Ç', 'ç'],
                    'd': ['D', 'd', 'Ḍ', 'ḍ'], 'e': ['E', 'e', 'ē', 'ê', 'é', 'è', 'ë', 'Ê', 'É', 'È', 'Ë', 'Ē'],
@@ -36,6 +35,7 @@ def combine1(tpl):
 
 # Appending lowercase/uppercase word possibility to the list.
 def append_word(exword):
+
     # Appending possible lower case and uppercase word to the file.
     with open(filename, 'a', encoding='UTF-8', newline='') as appendingcsvfile:
         csvwriter = csv.writer(appendingcsvfile)
@@ -44,7 +44,6 @@ def append_word(exword):
 
 # Writing/Appending contents to new/existing file
 def file_write(word, gen_word):
-    write_status = ""
     file_present = False
     if os.path.isfile(filename):
         file_present = True
@@ -109,6 +108,21 @@ def word_generator(word):
 
 
 # Main function connecting from the bot command to -
+# Add word as well as it's combination to the list on CSV file
+def word_add_to_list(serverid, word):
+    get_filename = file_existing_check(serverid)
+    if get_filename:
+        status = word_generator(word)
+    else:
+        status = False
+    if status:
+        embed = discord.Embed(title="Sucess!", description=f"{status}", colour=discord.Color.green())
+        return embed
+    else:
+        print("Error occured while writing to file!")
+
+
+# Main function connecting from the bot command to -
 # Check if word is present in the list if parameter is passed. If no parameters are passed, return all the contents in the csv file.
 def word_check_list(serverid, word=None):
     file_name = file_name_existing_check(serverid)
@@ -126,21 +140,7 @@ def word_check_list(serverid, word=None):
         words = file_read_all()  # words will have list value. Discord Embed needs string values.
         for item in words:
             word_list += item
-        embed = discord.Embed(title="Available in List:", description="All the available word in this server:", colour=discord.Color.blue())
+        embed = discord.Embed(title="Available in List:", description="All the available word in this server:",
+                              colour=discord.Color.blue())
         embed.add_field(name="", value=word_list)
         return embed
-
-
-# Main function connecting from the bot command to -
-# Add word as well as it's combination to the list on CSV file
-def word_add_to_list(serverid, word):
-    get_filename = file_existing_check(serverid)
-    if get_filename:
-        status = word_generator(word)
-    else:
-        status = False
-    if status:
-        embed = discord.Embed(title="Sucess!", description=f"{status}", colour=discord.Color.green())
-        return embed
-    else:
-        print("Error occured while writing to file!")
