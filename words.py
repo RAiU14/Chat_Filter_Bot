@@ -3,6 +3,7 @@ import discord
 import itertools
 import csv
 import os
+
 special_letters = {'a': ['A', 'a', 'ā', 'æ', 'ã', 'å', 'ā', 'à', 'á', 'â', 'ä', 'Ā', 'Ã', 'Å', 'Ā', 'À', 'Á', 'Â', 'Ä'],
                    'b': ['B', 'b'], 'c': ['C', 'c', 'Ç', 'ç'],
                    'd': ['D', 'd', 'Ḍ', 'ḍ'], 'e': ['E', 'e', 'ē', 'ê', 'é', 'è', 'ë', 'Ê', 'É', 'È', 'Ë', 'Ē'],
@@ -20,6 +21,7 @@ filename = "saved_word.csv"
 fieldname = ['Word', 'Similars']
 
 
+# Try to check filename by commenting line 20 and make necessary changes
 # Checking if server based CSV file exists or not.
 def file_existing_check(serverid):
     file_name = serverid + "saved_word.csv"
@@ -33,9 +35,18 @@ def combine1(tpl):
     return t
 
 
+# Generate possible word combinations
+def word_generator(word):
+    temp = []
+    for each_letter in word.lower():
+        temp.append(special_letters[each_letter])
+    new_word = list(map(combine1, itertools.product(*temp)))
+    write_status = file_write(word, new_word)  # Calling file writing function here
+    return write_status
+
+
 # Appending lowercase/uppercase word possibility to the list.
 def append_word(exword):
-
     # Appending possible lower case and uppercase word to the file.
     with open(filename, 'a', encoding='UTF-8', newline='') as appendingcsvfile:
         csvwriter = csv.writer(appendingcsvfile)
@@ -85,26 +96,32 @@ def file_read_word(word):
 
 # Reading all the contents in the CSV file.
 def file_read_all():
-    file_present = False
     contents = []
     if os.path.isfile(filename):
-        file_present = True
-    if file_present:
         with open(filename, 'r', encoding='UTF-8') as readingcsvfile:
             csvreader = csv.reader(readingcsvfile)
             for line in list(csvreader):
-                contents += line[0]
+                contents.append(line[0])
     return contents
 
 
-# Generate possible word combinations
-def word_generator(word):
-    temp = []
-    for each_letter in word.lower():
-        temp.append(special_letters[each_letter])
-    new_word = list(map(combine1, itertools.product(*temp)))
-    write_status = file_write(word, new_word)  # Calling file writing function here
-    return write_status
+# Delete a word within the file
+def word_delete(file_name, word):
+    word_list = []
+    try:
+        with open(file_name, 'r', newline='', encoding='UTF-8') as file_reading:
+            csvreader = csv.reader(file_reading)
+            for item in csvreader:
+                word_list.append(item)
+        with open(file_name, 'w', newline='', encoding='UTF-8') as file_writing:
+            csvwriter = csv.writer(file_writing)
+            for item in word_list:
+                if item != word:
+                    csvwriter.writerow(item)
+                status = True
+    except Exception:
+        status = False
+    return status
 
 
 # Main function connecting from the bot command to -
@@ -136,11 +153,26 @@ def word_check_list(serverid, word=None):
                 embed = discord.Embed(title=f"{word} is not present:", description="This word is not present in the filter list!", colour=discord.Color.red())
             return embed
     else:
-        word_list = ''
         words = file_read_all()  # words will have list value. Discord Embed needs string values.
-        for item in words:
-            word_list += item
-        embed = discord.Embed(title="Available in List:", description="All the available word in this server:",
+        word_list = '\n'.join(words)
+        embed = discord.Embed(title="All words in List:", description="All the available word in this server:",
                               colour=discord.Color.blue())
         embed.add_field(name="", value=word_list)
+        # Look into embed word limit once.
+        return embed
+
+
+# Main function connecting from the bot command to -
+# Remove a particular word from the list.
+def word_delete_list(serverid, word):
+    file_name = file_existing_check(serverid)
+    # Rocker's suggestion - Convert into list take contents from file, and write it back again.
+    status = False
+    if file_name:
+        status = word_delete(file_name, word)
+    if status:
+        embed = discord.Embed(title="Successful", description=f"{word}, is deleted from the list succesfully!", colour=discord.Color.green())
+        return embed
+    else:
+        embed = discord.Embed(title="Error!", description="Word deleting failed! Try again maybe?", color=discord.Color.red())
         return embed

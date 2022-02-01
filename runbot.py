@@ -1,6 +1,3 @@
-import discord
-
-import words
 from imports import *
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -44,18 +41,15 @@ async def inv(ctx):
                                             color=ctx.author.color))
 
 
+# Command Call for Word Filter. If word is not mentioned then all contents will be displayed.
 @client.command(name='wfilter')
 async def wfilter(ctx):
     if await athchk(ctx):
         return
     else:
         serverid = ctx.message.guild.id
-        word_list = words.word_filter_list(serverid)
-        if word_list is True:
-            ctx.reply("Word already exist!")
-        else:
-            await ctx.reply("Contents are -")
-            await ctx.send(word_list)
+        word_list = words.word_check_list(serverid)
+        ctx.reply(word_list)
         return
 
 
