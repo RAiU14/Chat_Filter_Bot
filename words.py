@@ -21,11 +21,12 @@ special_letters = {'a': ['A', 'a', 'ā', 'æ', 'ã', 'å', 'ā', 'à', 'á', 'â
 fieldname = ['Word', 'Similars']
 
 # Try to set this path to another directory.
+# Add a list of default words in the csv file as well.
 
 
 # Checking if server based CSV file exists or not.
 def file_existing_check(serverid):
-    file_name = serverid + "saved_word.csv"
+    file_name = str(serverid) + "saved_word.csv"
     return file_name
 
 
@@ -175,9 +176,12 @@ def word_check_list(serverid, word=None):
     else:
         words = file_read_all(serverid)  # words will have list value. Discord Embed needs string values.
         word_list = '\n'.join(words)
-        embed = discord.Embed(title="All words in List:", description="All the available word in this server:",
-                              colour=discord.Color.blue())
-        embed.add_field(name="", value=word_list)
+        if word_list:
+            embed = discord.Embed(title="All words in List:", description="All the available word in this server:",
+                                  colour=discord.Color.blue())
+            embed.add_field(name="\u200b", value=word_list)
+        else:
+            embed = discord.Embed(title="There is nothing but dust here!~~", colour=discord.Color.blue())
         # Look into embed word limit once.
         return embed
 
@@ -199,8 +203,8 @@ def word_delete_list(serverid, word):
 
 
 # Main function connecting from the bot command to -
-# Remove a particular word from the list.
-def delete_list(serverid):
+# Remove all the words from the list.
+def word_clear_list(serverid):
     file_name = file_existing_check(serverid)
     status = False
     if file_name:
