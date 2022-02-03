@@ -66,12 +66,13 @@ async def wfadd(ctx):
         if len(ctx.message.content.split(' ')) == 1:
             msg = await ctx.reply("Oops you forgot to mention what word to add! Try again")
         else:
-            word_add_status = words.word_add_to_list(ctx.message.guild.id, ' '.join(map(str, ctx.message.content.split(' '))))
+            word_add_status = words.word_add_to_list(ctx.message.guild.id, ctx.message.content.split(' ')[1])
             msg = await ctx.reply(embed=word_add_status)
         await msg.add_reaction("🪄")
 
 
 # Command Call for deleting a word to the list.
+# Error in deleting the content from the file. Check once!
 @client.command(name='wfdelete')
 async def wfdelete(ctx):
     if await athchk(ctx):
@@ -80,7 +81,7 @@ async def wfdelete(ctx):
         if len(ctx.message.content.split(' ')) == 1:
             msg = await ctx.reply("Oops you forgot to mention what word to add! Try again")
         else:
-            word_delete_status = words.word_delete_list(ctx.message.guild.id, ' '.join(map(str, ctx.message.content.split(' '))))
+            word_delete_status = words.word_delete_list(ctx.message.guild.id, ctx.message.content.split(' ')[1])
             msg = await ctx.reply(embed=word_delete_status)
         await msg.add_reaction("🪄")
 
@@ -91,11 +92,8 @@ async def wfclear(ctx):
     if await athchk(ctx):
         return
     else:
-        if len(ctx.message.content.split(' ')) == 1:
-            msg = await ctx.reply("Oops you forgot to mention what word to add! Try again")
-        else:
-            file_clearing_status = words.word_clear_list(ctx.message.guild.id)
-            msg = await ctx.reply(embed=file_clearing_status)
+        file_clearing_status = words.word_clear_list(ctx.message.guild.id)
+        msg = await ctx.reply(embed=file_clearing_status)
         await msg.add_reaction("🪄")
 
 

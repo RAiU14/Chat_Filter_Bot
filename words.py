@@ -20,13 +20,12 @@ special_letters = {'a': ['A', 'a', 'ā', 'æ', 'ã', 'å', 'ā', 'à', 'á', 'â
                    'z': ['z', 'Z', 'ż', 'ź', 'ž', 'Ż', 'Ź', 'Ž']}
 fieldname = ['Word', 'Similars']
 
-# Try to set this path to another directory.
 # Add a list of default words in the csv file as well.
 
 
-# Checking if server based CSV file exists or not.
+# Checking if server based CSV file exists in the directory or not.
 def file_existing_check(serverid):
-    file_name = str(serverid) + "saved_word.csv"
+    file_name = f"./Server_Files/{serverid}.csv"
     return file_name
 
 
@@ -47,15 +46,6 @@ def word_generator(serverid, word):
     return write_status
 
 
-# Appending lowercase/uppercase word possibility to the list.
-def append_word(serverid, exword):
-    # Appending possible lower case and uppercase word to the file.
-    filename = file_existing_check(serverid)
-    with open(filename, 'a', encoding='UTF-8', newline='') as appendingcsvfile:
-        csvwriter = csv.writer(appendingcsvfile)
-        csvwriter.writerow([exword, [exword.lower(), exword.upper()]])
-
-
 # Writing/Appending contents to new/existing file
 def file_write(serverid, word, gen_word):
     filename = file_existing_check(serverid)
@@ -65,7 +55,6 @@ def file_write(serverid, word, gen_word):
             with open(filename, 'a', encoding='UTF-8', newline="") as appendingcsvfile:
                 csvwriter = csv.writer(appendingcsvfile)
                 csvwriter.writerow([word, gen_word])
-            append_word(serverid, word)
             write_status = True
             return write_status
         else:
@@ -74,8 +63,7 @@ def file_write(serverid, word, gen_word):
                 csvwriter = csv.writer(writingcsvfile)
                 csvwriter.writerow(['Word', 'Similars'])
                 csvwriter.writerow([word, gen_word])
-            append_word(serverid, word)
-            write_status = False
+            write_status = True
             return write_status
     except Exception:
         write_status = False
@@ -129,6 +117,7 @@ def word_delete(file_name, word):
     except Exception:
         status = False
     return status
+# Error, content is not being deleted. Check it again.
 
 
 # Clear the complete list
@@ -152,7 +141,7 @@ def word_add_to_list(serverid, word):
     else:
         status = False
     if status:
-        embed = discord.Embed(title="Sucess!", description=f"{status}", colour=discord.Color.green())
+        embed = discord.Embed(title="Sucess!", description=f"Added {word} to list successfully!", colour=discord.Color.green())
         return embed
     else:
         embed = discord.Embed(title="Error!", description="Adding word to file failed! Try again maybe?",
@@ -194,6 +183,7 @@ def word_delete_list(serverid, word):
     status = False
     if file_name:
         status = word_delete(file_name, word)
+        print(status)
     if status:
         embed = discord.Embed(title="Successful", description=f"{word}, is deleted from the list succesfully!", colour=discord.Color.green())
         return embed
@@ -208,7 +198,7 @@ def word_clear_list(serverid):
     file_name = file_existing_check(serverid)
     status = False
     if file_name:
-        csv_clear(file_name)
+        status = csv_clear(file_name)
     if status:
         embed = discord.Embed(title="Successful", description=f"The list is cleared now!",
                               colour=discord.Color.green())
