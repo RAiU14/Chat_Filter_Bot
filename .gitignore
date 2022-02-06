@@ -322,3 +322,5 @@ cython_debug/
 
 Tests/
 .idea
+.gitignore
+Server_Files/

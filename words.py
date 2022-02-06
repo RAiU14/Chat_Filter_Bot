@@ -19,8 +19,7 @@ special_letters = {'a': ['A', 'a', 'ā', 'æ', 'ã', 'å', 'ā', 'à', 'á', 'â
                    'x': ['x', 'X'], 'y': ['y', 'Y', 'Ÿ', 'ÿ'],
                    'z': ['z', 'Z', 'ż', 'ź', 'ž', 'Ż', 'Ź', 'Ž']}
 fieldname = ['Word', 'Similars']
-
-# Add a list of default words in the csv file as well.
+# Use JSON file for parsing special letters for word generation later.
 
 
 # Checking if server based CSV file exists in the directory or not.
@@ -95,6 +94,7 @@ def file_read_all(serverid):
     if os.path.isfile(filename):
         with open(filename, 'r', encoding='UTF-8') as readingcsvfile:
             csvreader = csv.reader(readingcsvfile)
+            csvreader.__next__()
             for line in list(csvreader):
                 contents.append(line[0])
     return contents
@@ -111,13 +111,12 @@ def word_delete(file_name, word):
         with open(file_name, 'w', newline='', encoding='UTF-8') as file_writing:
             csvwriter = csv.writer(file_writing)
             for item in word_list:
-                if item != word:
+                if item[0] != word:  # Used to check if first element of the list is equal to the word to be deleted.
                     csvwriter.writerow(item)
                 status = True
     except Exception:
         status = False
     return status
-# Error, content is not being deleted. Check it again.
 
 
 # Clear the complete list
@@ -183,7 +182,6 @@ def word_delete_list(serverid, word):
     status = False
     if file_name:
         status = word_delete(file_name, word)
-        print(status)
     if status:
         embed = discord.Embed(title="Successful", description=f"{word}, is deleted from the list succesfully!", colour=discord.Color.green())
         return embed

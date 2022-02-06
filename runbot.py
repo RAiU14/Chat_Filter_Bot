@@ -72,7 +72,6 @@ async def wfadd(ctx):
 
 
 # Command Call for deleting a word to the list.
-# Error in deleting the content from the file. Check once!
 @client.command(name='wfdelete')
 async def wfdelete(ctx):
     if await athchk(ctx):
@@ -96,5 +95,7 @@ async def wfclear(ctx):
         msg = await ctx.reply(embed=file_clearing_status)
         await msg.add_reaction("🪄")
 
+
+# @client.event() to call the reaction element and then get the payload from that message with reaction to make actions on that message.
 
 client.run(TOKEN)
