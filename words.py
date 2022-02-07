@@ -1,31 +1,26 @@
 # Fixed Random Word Generator
-import discord
-import itertools
-import csv
-import os
+from imports import *
 
-# Make it a way where all the special_letters are saved in another csv file where beta testers can add/remove them on a later stage.
-special_letters = {'a': ['A', 'a', 'ā', 'æ', 'ã', 'å', 'ā', 'à', 'á', 'â', 'ä', 'Ā', 'Ã', 'Å', 'Ā', 'À', 'Á', 'Â', 'Ä'],
-                   'b': ['B', 'b'], 'c': ['C', 'c', 'Ç', 'ç'],
-                   'd': ['D', 'd', 'Ḍ', 'ḍ'], 'e': ['E', 'e', 'ē', 'ê', 'é', 'è', 'ë', 'Ê', 'É', 'È', 'Ë', 'Ē'],
-                   'f': ['F', 'f'], 'g': ['G', 'g'], 'h': ['H', 'h'],
-                   'i': ['i', 'ī', 'î', 'ï', 'í', 'ì', 'I', 'Ī', 'Î', 'Ï', 'Í', 'Ì'], 'j': ['j', 'J'], 'k': ['k', 'K'],
-                   'l': ['L', 'l', 'Ł', 'ł'], 'm': ['M', 'm'],
-                   'n': ['n', 'ń', 'ñ', 'Ń', 'Ñ', 'N'],
-                   'o': ['o', 'õ', 'ō', 'œ', 'ø', 'ò', 'ö', 'ó', 'ô', 'O', 'Œ', 'Ø', 'Ō', 'Ö', 'Õ', 'Ô', 'Ó', 'Ò'],
-                   'p': ['p', 'P'], 'q': ['q', 'Q'], 'r': ['r', 'R'], 's': ['s', 'Ś', 'Š', 'ś', 'š', 'ß', 'S'],
-                   't': ['t', 'T'],
-                   'u': ['u', 'ū', 'û', 'ü', 'ú', 'ù', 'U', 'Ū', 'Û', 'Ü', 'Ú', 'Ù'], 'v': ['v', 'V'], 'w': ['w', 'W'],
-                   'x': ['x', 'X'], 'y': ['y', 'Y', 'Ÿ', 'ÿ'],
-                   'z': ['z', 'Z', 'ż', 'ź', 'ž', 'Ż', 'Ź', 'Ž']}
 fieldname = ['Word', 'Similars']
-# Use JSON file for parsing special letters for word generation later.
 
 
+# Function to read contents from JSON in the form of a dictionary.
+def read_json_special_characters():
+    with open('special_characters.json') as json_reading:
+        return json.load(json_reading)
+
+
+special_letters = read_json_special_characters()
+
+
+# Try to make everythin in JSON format instead of CSV
 # Checking if server based CSV file exists in the directory or not.
 def file_existing_check(serverid):
+    if not os.path.isdir("Server_Files"):
+        os.mkdir("Server_Files")
     file_name = f"./Server_Files/{serverid}.csv"
     return file_name
+# Try to get rid of this function
 
 
 def combine1(tpl):
@@ -35,69 +30,68 @@ def combine1(tpl):
     return t
 
 
-# Generate possible word combinations
-def word_generator(serverid, word):
+# Generate and return possible word combinations
+def word_generator(word):
     temp = []
     for each_letter in word.lower():
         temp.append(special_letters[each_letter])
-    new_word = list(map(combine1, itertools.product(*temp)))
-    write_status = file_write(serverid, word, new_word)  # Calling file writing function here
-    return write_status
+    generated_words = list(map(combine1, itertools.product(*temp)))
+    return generated_words
 
 
-# Writing/Appending contents to new/existing file
-def file_write(serverid, word, gen_word):
-    filename = file_existing_check(serverid)
+# Main calling function for Writing/Appending contents to json file.
+# Passing filename along with path from the runbot.py
+def json_file_write(filename: str, data: dict):
     try:
         if os.path.isfile(filename):
-            # Appending new word
-            with open(filename, 'a', encoding='UTF-8', newline="") as appendingcsvfile:
-                csvwriter = csv.writer(appendingcsvfile)
-                csvwriter.writerow([word, gen_word])
-            write_status = True
-            return write_status
+            with open(filename) as reading_json:
+                curr_data = json.load(reading_json)
+            curr_data.update(data)
+            with open(filename, 'w') as writing_json:
+                json.dump(curr_data, writing_json, indent=4)  # indent is used to indent in the json file.
+            embed = discord.Embed(title="Sucess!", description=f"Added {list(data.keys())[0]} to list successfully!",
+                                  colour=discord.Color.green())
+            return embed
         else:
-            # Writing the new contents to the file if not already existing.
-            with open(filename, 'w', encoding='UTF-8', newline="") as writingcsvfile:
-                csvwriter = csv.writer(writingcsvfile)
-                csvwriter.writerow(['Word', 'Similars'])
-                csvwriter.writerow([word, gen_word])
-            write_status = True
-            return write_status
+            with open(filename, 'w') as writing_json:
+                json.dump(data, writing_json, indent=4)
+            embed = discord.Embed(title="Sucess!", description=f"Added {list(data.keys())[0]} to list successfully!",
+                                  colour=discord.Color.green())
+            return embed
     except Exception:
-        write_status = False
-    return write_status
+        embed = discord.Embed(title="Error!", description="Adding word to file failed! Try again maybe?",
+                              color=discord.Color.red())
+        return embed
 
 
-# Reading contents of the word
-def file_read_word(serverid, word):
-    filename = file_existing_check(serverid)
+# Main function to check if the word is existing in the filter list.
+# Reading contents in the list
+def json_file_read_word(filename, word=None):
     try:
-        if os.path.isfile(filename):
-            with open(filename, 'r', encoding='UTF-8') as readingcsvfile:
-                csvreader = csv.reader(readingcsvfile)
-                for line in list(csvreader):
-                    if word in line[0]:
-                        status = True
-                    else:
-                        word_generator(serverid, word)
-                        status = False
+        if word:
+            if os.path.isfile(filename):
+                with open(filename, 'r') as reading_json:
+                    data = json.load(reading_json)
+                    if word in data.keys():
+                        embed = discord.Embed(title="It exists!", description=f"The {word} is already in the filter list!",
+                                              colour=discord.Color.blue())
+                        return embed
+        else:
+            if os.path.isfile(filename):
+                with open(filename, 'r') as reading_json:
+                    data = json.load(reading_json)
+                    contents = list(data.keys())
+                if contents:
+                    embed = discord.Embed(title="Here's the contents of the list-", description=f"{contents}",
+                                          colour=discord.Color.green())
+                else:
+                    embed = discord.Embed(title="Oh Noo~!", description=f"There's nothing but dust here 💨!",
+                                          colour=discord.Color.red())
+                return embed
     except Exception:
-        status = False
-    return status
-
-
-# Reading all the contents in the CSV file.
-def file_read_all(serverid):
-    filename = file_existing_check(serverid)
-    contents = []
-    if os.path.isfile(filename):
-        with open(filename, 'r', encoding='UTF-8') as readingcsvfile:
-            csvreader = csv.reader(readingcsvfile)
-            csvreader.__next__()
-            for line in list(csvreader):
-                contents.append(line[0])
-    return contents
+        embed = discord.Embed(title="Oops!", description="Some error occured, try again!",
+                              color=discord.Color.red())
+        return embed
 
 
 # Delete a word within the file
@@ -132,49 +126,6 @@ def csv_clear(file_name):
 
 
 # Main function connecting from the bot command to -
-# Add word as well as it's combination to the list on CSV file
-def word_add_to_list(serverid, word):
-    get_filename = file_existing_check(serverid)
-    if get_filename:
-        status = word_generator(serverid, word)
-    else:
-        status = False
-    if status:
-        embed = discord.Embed(title="Sucess!", description=f"Added {word} to list successfully!", colour=discord.Color.green())
-        return embed
-    else:
-        embed = discord.Embed(title="Error!", description="Adding word to file failed! Try again maybe?",
-                              color=discord.Color.red())
-        return embed
-
-
-# Main function connecting from the bot command to -
-# Check if word is present in the list if parameter is passed. If no parameters are passed, return all the contents in the csv file.
-def word_check_list(serverid, word=None):
-    file_name = file_existing_check(serverid)
-    if word:
-        if file_name:
-            word_check_status = file_read_word(serverid, word)
-            if word_check_status:
-                embed = discord.Embed(title=f"{word} is already present:", description="This word is already present in the filter list.", colour=discord.Color.green())
-                return embed
-            else:
-                embed = discord.Embed(title=f"{word} is not present:", description="This word is not present in the filter list!", colour=discord.Color.red())
-            return embed
-    else:
-        words = file_read_all(serverid)  # words will have list value. Discord Embed needs string values.
-        word_list = '\n'.join(words)
-        if word_list:
-            embed = discord.Embed(title="All words in List:", description="All the available word in this server:",
-                                  colour=discord.Color.blue())
-            embed.add_field(name="\u200b", value=word_list)
-        else:
-            embed = discord.Embed(title="There is nothing but dust here!~~", colour=discord.Color.blue())
-        # Look into embed word limit once.
-        return embed
-
-
-# Main function connecting from the bot command to -
 # Remove a particular word from the list.
 def word_delete_list(serverid, word):
     file_name = file_existing_check(serverid)
@@ -183,10 +134,12 @@ def word_delete_list(serverid, word):
     if file_name:
         status = word_delete(file_name, word)
     if status:
-        embed = discord.Embed(title="Successful", description=f"{word}, is deleted from the list succesfully!", colour=discord.Color.green())
+        embed = discord.Embed(title="Successful", description=f"{word}, is deleted from the list succesfully!",
+                              colour=discord.Color.green())
         return embed
     else:
-        embed = discord.Embed(title="Error!", description="Word deleting failed! Try again maybe?", color=discord.Color.red())
+        embed = discord.Embed(title="Error!", description="Word deleting failed! Try again maybe?",
+                              color=discord.Color.red())
         return embed
 
 

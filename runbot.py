@@ -41,20 +41,18 @@ async def inv(ctx):
                                             color=ctx.author.color))
 
 
-# Command Call for checking word filters. If word is not mentioned then all contents will be displayed.
-@client.command(name='wfilter')
-async def wfilter(ctx):
+# Comman Call for checking if the word exist in the filter list.
+@client.command(name='wfcheck')
+async def wfcheck(ctx):
     if await athchk(ctx):
         return
-    else:
-        if len(ctx.message.content.split(" ")) == 1:
-            word_list = words.word_check_list(ctx.message.guild.id)
-            msg = await ctx.reply(embed=word_list)
-        else:
-            args = ' '.join(map(str, ctx.message.content.split(" ")))
-            word_check_result = words.word_check_list(ctx.message.guild.id, args)
-            msg = await ctx.reply(embed=word_check_result)
-        await msg.add_reaction("🪄")  # This and the following reactions does not do anything as of now, the code is supposed to delete the msg.
+    word = None
+    args = ctx.message.content.split(' ')
+    if len(args) > 1:
+        word = args[-1]
+    word_list_status = words.json_file_read_word(f'./Server_Files/{ctx.message.guild.id}.json', word)
+    msg = await ctx.reply(word_list_status)
+    await msg.add_reaction("🪄")  # This and the following reactions does not do anything as of now, the code is supposed to delete the msg.
 
 
 # Command Call for adding a word to the list.
@@ -66,8 +64,8 @@ async def wfadd(ctx):
         if len(ctx.message.content.split(' ')) == 1:
             msg = await ctx.reply("Oops you forgot to mention what word to add! Try again")
         else:
-            word_add_status = words.word_add_to_list(ctx.message.guild.id, ctx.message.content.split(' ')[1])
-            msg = await ctx.reply(embed=word_add_status)
+            writing_status = words.json_file_write(f'./Server_Files/{ctx.message.guild.id}.json', {ctx.message.content.split(' ')[1]: words.word_generator(ctx.message.content.split(' ')[1])})
+            msg = await ctx.reply(embed=writing_status)
         await msg.add_reaction("🪄")
 
 
@@ -97,5 +95,12 @@ async def wfclear(ctx):
 
 
 # @client.event() to call the reaction element and then get the payload from that message with reaction to make actions on that message.
+
+
+# @client.event
+# async def on_message(message):
+#     for item in word:
+#         if word[1] in message:
+#     return
 
 client.run(TOKEN)

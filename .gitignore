@@ -322,5 +322,5 @@ cython_debug/
 
 Tests/
 .idea
-.gitignore
 Server_Files/
+special_characters.json
