@@ -81,26 +81,49 @@ async def wfdelete(ctx):
     if not word:
         def check(message):  # Checking if the author was the same one who triggered the message and if it is in the same channel.
             return (message.author == ctx.message.author) and (message.channel == ctx.message.channel)
-        await ctx.message.send("Are you sure you want to clear the list?\nYes/yes(Y/y) or No/no(N/n)?\nDefault Timeout in 30 seconds⏱️!")  # Make into embed later
+        await ctx.message.channel.send("Are you sure you want to clear the list?\nYes/yes(Y/y) or No/no(N/n)?\nDefault Timeout in 30 seconds⏱️!")  # Make into embed later
         user_response = await client.wait_for('message', check=check, timeout=30)
         if user_response.content in ('Yes', 'yes', 'y', 'Y'):
             delete_status = words.json_word_delete(f'./Server_Files/{ctx.message.guild.id}.json')
-            msg = await ctx.message.send(embed=delete_status)
+            msg = await ctx.message.channel.send(embed=delete_status)
         else:
-            msg = await ctx.message.send("That was close!")
+            msg = await ctx.message.channel.send("That was close!")
     else:
-        delete_status = words.json_file_read_word(f'./Server_Files/{ctx.message.guild.id}.json', word)
-        msg = await ctx.reply(delete_status)
+        delete_status = words.json_word_delete(f'./Server_Files/{ctx.message.guild.id}.json', word)
+        msg = await ctx.reply(embed=delete_status)
     await msg.add_reaction("🪄")
 
+
+def is_command(msg):
+    bot_commands = ('&wfcheck', '&wfadd', '&wfdelete')
+    if any(msg.startswith(i) for i in bot_commands):  # any can be used as a or operator
+        return True
+    else:
+        return False
 
 # @client.event() to call the reaction element and then get the payload from that message with reaction to make actions on that message.
 
 
-# @client.event
-# async def on_message(message):
-#     for item in word:
-#         if word[1] in message:
-#     return
-
+# This is used to make the bot read every messsage sent on the server.
+@client.listen('on_message')
+async def msg_check(message):
+    server_id = message.channel.guild.id
+    channel = message.channel
+    author = message.author
+    msg = message.content.split()  # Splitting the words in a message to check if the word is present in the message.
+    try:
+        if is_command(message.content):
+            return
+        filename = f"Server_Files/{server_id}.json"
+        with open(filename) as data_reading:
+            server_data = json.load(data_reading)
+        for key in server_data.keys():
+            for item in server_data[key]:
+                if item in msg:
+                    await message.delete()
+                    await channel.send(f'{author.mention}, That word is banned!')
+    except discord.Forbidden:  # If the bot does not have enough permissions to delete the message.
+        await channel.send("I do not have enough permission to delete messages!")
+    except Exception:
+        await channel.send("I ran into some error! I was unable to delete that message!")
 client.run(TOKEN)

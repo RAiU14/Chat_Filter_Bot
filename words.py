@@ -107,7 +107,7 @@ def json_word_delete(filename: str, word=None):
             else:
                 word_data.clear()  # Clear the whole dictionary of JSON file.
             json.dump(word_data, jsonfile_writing, indent=4)
-            embed = discord.Embed(title="Sucess!", description=f"Deleted {word} to list successfully!",
+            embed = discord.Embed(title="Sucess!", description=f"Deleted {word} from list successfully!",
                                   colour=discord.Color.green())
             return embed
     except Exception:
