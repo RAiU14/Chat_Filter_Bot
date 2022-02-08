@@ -51,7 +51,7 @@ async def wfcheck(ctx):
     if len(args) > 1:
         word = args[-1]
     word_list_status = words.json_file_read_word(f'./Server_Files/{ctx.message.guild.id}.json', word)
-    msg = await ctx.reply(word_list_status)
+    msg = await ctx.reply(embed=word_list_status)
     await msg.add_reaction("🪄")  # This and the following reactions does not do anything as of now, the code is supposed to delete the msg.
 
 
@@ -74,24 +74,24 @@ async def wfadd(ctx):
 async def wfdelete(ctx):
     if await athchk(ctx):
         return
-    else:
-        if len(ctx.message.content.split(' ')) == 1:
-            msg = await ctx.reply("Oops you forgot to mention what word to add! Try again")
+    word = None
+    args = ctx.message.content.split(' ')
+    if len(args) > 1:
+        word = args[-1]
+    if not word:
+        def check(message):  # Checking if the author was the same one who triggered the message and if it is in the same channel.
+            return (message.author == ctx.message.author) and (message.channel == ctx.message.channel)
+        await ctx.message.send("Are you sure you want to clear the list?\nYes/yes(Y/y) or No/no(N/n)?\nDefault Timeout in 30 seconds⏱️!")  # Make into embed later
+        user_response = await client.wait_for('message', check=check, timeout=30)
+        if user_response.content in ('Yes', 'yes', 'y', 'Y'):
+            delete_status = words.json_word_delete(f'./Server_Files/{ctx.message.guild.id}.json')
+            msg = await ctx.message.send(embed=delete_status)
         else:
-            word_delete_status = words.word_delete_list(ctx.message.guild.id, ctx.message.content.split(' ')[1])
-            msg = await ctx.reply(embed=word_delete_status)
-        await msg.add_reaction("🪄")
-
-
-# Command Call for clearing all the contents in the list.
-@client.command(name='wfclear')
-async def wfclear(ctx):
-    if await athchk(ctx):
-        return
+            msg = await ctx.message.send("That was close!")
     else:
-        file_clearing_status = words.word_clear_list(ctx.message.guild.id)
-        msg = await ctx.reply(embed=file_clearing_status)
-        await msg.add_reaction("🪄")
+        delete_status = words.json_file_read_word(f'./Server_Files/{ctx.message.guild.id}.json', word)
+        msg = await ctx.reply(delete_status)
+    await msg.add_reaction("🪄")
 
 
 # @client.event() to call the reaction element and then get the payload from that message with reaction to make actions on that message.

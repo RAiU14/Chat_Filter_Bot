@@ -40,7 +40,6 @@ def word_generator(word):
 
 
 # Main calling function for Writing/Appending contents to json file.
-# Passing filename along with path from the runbot.py
 def json_file_write(filename: str, data: dict):
     try:
         if os.path.isfile(filename):
@@ -64,13 +63,12 @@ def json_file_write(filename: str, data: dict):
         return embed
 
 
-# Main function to check if the word is existing in the filter list.
-# Reading contents in the list
-def json_file_read_word(filename, word=None):
+# Main function to check if the word exists in the list. Or display the entire list.
+def json_file_read_word(filename: str, word=None):
     try:
         if word:
             if os.path.isfile(filename):
-                with open(filename, 'r') as reading_json:
+                with open(filename) as reading_json:
                     data = json.load(reading_json)
                     if word in data.keys():
                         embed = discord.Embed(title="It exists!", description=f"The {word} is already in the filter list!",
@@ -78,7 +76,7 @@ def json_file_read_word(filename, word=None):
                         return embed
         else:
             if os.path.isfile(filename):
-                with open(filename, 'r') as reading_json:
+                with open(filename) as reading_json:
                     data = json.load(reading_json)
                     contents = list(data.keys())
                 if contents:
@@ -94,67 +92,25 @@ def json_file_read_word(filename, word=None):
         return embed
 
 
-# Delete a word within the file
-def word_delete(file_name, word):
-    word_list = []
+# Main calling function to delete a word from the list or to clear the entire list.
+def json_word_delete(filename: str, word=None):
     try:
-        with open(file_name, 'r', newline='', encoding='UTF-8') as file_reading:
-            csvreader = csv.reader(file_reading)
-            for item in csvreader:
-                word_list.append(item)
-        with open(file_name, 'w', newline='', encoding='UTF-8') as file_writing:
-            csvwriter = csv.writer(file_writing)
-            for item in word_list:
-                if item[0] != word:  # Used to check if first element of the list is equal to the word to be deleted.
-                    csvwriter.writerow(item)
-                status = True
+        if word:
+            with open(filename) as jsonfile_reading:
+                word_data = json.load(jsonfile_reading)
+            if word not in word_data.keys():  # When the word does not exist.
+                embed = discord.Embed(title='Wait a minute..', description='Are you sure that word exist in the list? Check once more!', colour=discord.Color.red())
+                return embed
+        with open(filename, 'w') as jsonfile_writing:
+            if word:
+                del word_data[word]  # Can use pop or del to delete a key and contents from the JSON file.
+            else:
+                word_data.clear()  # Clear the whole dictionary of JSON file.
+            json.dump(word_data, jsonfile_writing, indent=4)
+            embed = discord.Embed(title="Sucess!", description=f"Deleted {word} to list successfully!",
+                                  colour=discord.Color.green())
+            return embed
     except Exception:
-        status = False
-    return status
-
-
-# Clear the complete list
-def csv_clear(file_name):
-    try:
-        with open(file_name, 'w', newline='', encoding='UTF-8') as file_writing:
-            csvwriter = csv.writer(file_writing)
-            csvwriter.writerow('')
-            status = True
-    except Exception:
-        status = False
-    return status
-
-
-# Main function connecting from the bot command to -
-# Remove a particular word from the list.
-def word_delete_list(serverid, word):
-    file_name = file_existing_check(serverid)
-    # Rocker's suggestion - Convert into list take contents from file, and write it back again.
-    status = False
-    if file_name:
-        status = word_delete(file_name, word)
-    if status:
-        embed = discord.Embed(title="Successful", description=f"{word}, is deleted from the list succesfully!",
-                              colour=discord.Color.green())
-        return embed
-    else:
-        embed = discord.Embed(title="Error!", description="Word deleting failed! Try again maybe?",
-                              color=discord.Color.red())
-        return embed
-
-
-# Main function connecting from the bot command to -
-# Remove all the words from the list.
-def word_clear_list(serverid):
-    file_name = file_existing_check(serverid)
-    status = False
-    if file_name:
-        status = csv_clear(file_name)
-    if status:
-        embed = discord.Embed(title="Successful", description=f"The list is cleared now!",
-                              colour=discord.Color.green())
-        return embed
-    else:
-        embed = discord.Embed(title="Error!", description="Clearing failed! Try again maybe?",
+        embed = discord.Embed(title="Oops!", description="Some error occured, try again!",
                               color=discord.Color.red())
         return embed
