@@ -41,6 +41,7 @@ async def inv(ctx):
                                             color=ctx.author.color))
 
 
+# Comamnds for JSON file handlings for adding/removing words in the filter list.
 # Comman Call for checking if the word exist in the filter list.
 @client.command(name='wfcheck')
 async def wfcheck(ctx):
@@ -52,7 +53,8 @@ async def wfcheck(ctx):
         word = args[-1]
     word_list_status = words.json_file_read_word(f'./Server_Files/{ctx.message.guild.id}.json', word)
     msg = await ctx.reply(embed=word_list_status)
-    await msg.add_reaction("🪄")  # This and the following reactions does not do anything as of now, the code is supposed to delete the msg.
+    await msg.add_reaction(
+        "🪄")  # This and the following reactions does not do anything as of now, the code is supposed to delete the msg.
 
 
 # Command Call for adding a word to the list.
@@ -64,7 +66,8 @@ async def wfadd(ctx):
         if len(ctx.message.content.split(' ')) == 1:
             msg = await ctx.reply("Oops you forgot to mention what word to add! Try again")
         else:
-            writing_status = words.json_file_write(f'./Server_Files/{ctx.message.guild.id}.json', {ctx.message.content.split(' ')[1]: words.word_generator(ctx.message.content.split(' ')[1])})
+            writing_status = words.json_file_write(f'./Server_Files/{ctx.message.guild.id}.json', {
+                ctx.message.content.split(' ')[1]: words.word_generator(ctx.message.content.split(' ')[1])})
             msg = await ctx.reply(embed=writing_status)
         await msg.add_reaction("🪄")
 
@@ -79,9 +82,12 @@ async def wfdelete(ctx):
     if len(args) > 1:
         word = args[-1]
     if not word:
-        def check(message):  # Checking if the author was the same one who triggered the message and if it is in the same channel.
+        def check(
+                message):  # Checking if the author was the same one who triggered the message and if it is in the same channel.
             return (message.author == ctx.message.author) and (message.channel == ctx.message.channel)
-        await ctx.message.channel.send("Are you sure you want to clear the list?\nYes/yes(Y/y) or No/no(N/n)?\nDefault Timeout in 30 seconds⏱️!")  # Make into embed later
+
+        await ctx.message.channel.send(
+            "Are you sure you want to clear the list?\nYes/yes(Y/y) or No/no(N/n)?\nDefault Timeout in 30 seconds⏱️!")  # Make into embed later
         user_response = await client.wait_for('message', check=check, timeout=30)
         if user_response.content in ('Yes', 'yes', 'y', 'Y'):
             delete_status = words.json_word_delete(f'./Server_Files/{ctx.message.guild.id}.json')
@@ -94,14 +100,15 @@ async def wfdelete(ctx):
     await msg.add_reaction("🪄")
 
 
+# @client.event() to call the reaction element and then get the payload from that message with reaction to make actions on that message.
+
+# Event listener starts from here
 def is_command(msg):
     bot_commands = ('&wfcheck', '&wfadd', '&wfdelete')
     if any(msg.startswith(i) for i in bot_commands):  # any can be used as a or operator
         return True
     else:
         return False
-
-# @client.event() to call the reaction element and then get the payload from that message with reaction to make actions on that message.
 
 
 # This is used to make the bot read every messsage sent on the server.
@@ -113,6 +120,8 @@ async def msg_check(message):
     msg = message.content.split()  # Splitting the words in a message to check if the word is present in the message.
     try:
         if is_command(message.content):
+            return
+        if message.author == client.user:
             return
         filename = f"Server_Files/{server_id}.json"
         with open(filename) as data_reading:
@@ -126,4 +135,13 @@ async def msg_check(message):
         await channel.send("I do not have enough permission to delete messages!")
     except Exception:
         await channel.send("I ran into some error! I was unable to delete that message!")
+
+# To add:
+# - Feature to add/remove combination of special letter from JSON file
+# - Add a generic ban word list option
+#   - Option to add it or remove the generic ban word list
+# - Add server logging feature
+#   - Log a user's ban word usage (counter)
+#   - Word usage counter (Think if you need this, make it optional logging feature else.)
+
 client.run(TOKEN)

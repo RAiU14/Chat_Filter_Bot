@@ -1,7 +1,8 @@
 # Fixed Random Word Generator
+
 from imports import *
 
-fieldname = ['Word', 'Similars']
+# Remember to make a directory called Server_Files so that the bot can write/refer contents from.
 
 
 # Function to read contents from JSON in the form of a dictionary.
@@ -11,16 +12,6 @@ def read_json_special_characters():
 
 
 special_letters = read_json_special_characters()
-
-
-# Try to make everythin in JSON format instead of CSV
-# Checking if server based CSV file exists in the directory or not.
-def file_existing_check(serverid):
-    if not os.path.isdir("Server_Files"):
-        os.mkdir("Server_Files")
-    file_name = f"./Server_Files/{serverid}.csv"
-    return file_name
-# Try to get rid of this function
 
 
 def combine1(tpl):
@@ -66,6 +57,10 @@ def json_file_write(filename: str, data: dict):
 # Main function to check if the word exists in the list. Or display the entire list.
 def json_file_read_word(filename: str, word=None):
     try:
+        if not os.path.isfile(filename):
+            embed = discord.Embed(title="Oh Noo~!", description=f"There's nothing but dust here 💨!",
+                                  colour=discord.Color.red())
+            return embed
         if word:
             if os.path.isfile(filename):
                 with open(filename) as reading_json:
@@ -105,7 +100,10 @@ def json_word_delete(filename: str, word=None):
             if word:
                 del word_data[word]  # Can use pop or del to delete a key and contents from the JSON file.
             else:
-                word_data.clear()  # Clear the whole dictionary of JSON file.
+                with open(filename, 'w') as jsonfile_clearing:
+                    json.dump({}, jsonfile_clearing, indent=4)  # json.clear() returns error since there should always be something in the json file. For this instance {} (Empty Dictionary)
+                embed = discord.Embed(title="Sucess!", description=f"The list is now clear!", colour=discord.Color.green())
+                return embed
             json.dump(word_data, jsonfile_writing, indent=4)
             embed = discord.Embed(title="Sucess!", description=f"Deleted {word} from list successfully!",
                                   colour=discord.Color.green())
