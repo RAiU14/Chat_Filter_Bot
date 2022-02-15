@@ -41,6 +41,8 @@ async def inv(ctx):
                                             color=ctx.author.color))
 
 
+# Word Filter starts from here
+
 # Comamnds for JSON file handlings for adding/removing words in the filter list.
 # Comman Call for checking if the word exist in the filter list.
 @client.command(name='wfcheck')
@@ -85,24 +87,57 @@ async def wfdelete(ctx):
         def check(
                 message):  # Checking if the author was the same one who triggered the message and if it is in the same channel.
             return (message.author == ctx.message.author) and (message.channel == ctx.message.channel)
-
-        await ctx.message.channel.send(
-            "Are you sure you want to clear the list?\nYes/yes(Y/y) or No/no(N/n)?\nDefault Timeout in 30 seconds⏱️!")  # Make into embed later
-        user_response = await client.wait_for('message', check=check, timeout=30)
-        if user_response.content in ('Yes', 'yes', 'y', 'Y'):
-            delete_status = words.json_word_delete(f'./Server_Files/{ctx.message.guild.id}.json')
-            msg = await ctx.message.channel.send(embed=delete_status)
-        else:
-            msg = await ctx.message.channel.send("That was close!")
+        confirmation_embed = discord.Embed(title="Confirmation", description="You are about to clear the complete list of this server", colour=discord.Colour.orange())
+        confirmation_embed.add_field(name="To Confirm", value="Type `Yes`/`yes`/`Y`/`y`", inline=True)
+        confirmation_embed.add_field(name="To Cancel", value="Type `No`/`no`/`N`/`n`", inline=True)
+        confirmation_embed.set_footer(text="Default time out in 30 seconds!⏱️")
+        msg = await ctx.message.channel.send(embed=confirmation_embed)
+        await msg.add_reaction("🪄")
+        try:
+            user_response = await client.wait_for('message', check=check, timeout=30)
+            if user_response.content in ('Yes', 'yes', 'y', 'Y'):
+                delete_status = words.json_word_delete(f'./Server_Files/{ctx.message.guild.id}.json')
+                msg = await ctx.message.channel.send(embed=delete_status)
+            else:
+                msg = await ctx.message.channel.send("That was close!")
+        except asyncio.TimeoutError:
+            msg = await ctx.message.channel.send("You missed the window!\nExiting Menu..")
     else:
         delete_status = words.json_word_delete(f'./Server_Files/{ctx.message.guild.id}.json', word)
         msg = await ctx.reply(embed=delete_status)
     await msg.add_reaction("🪄")
 
 
+# Server Settings starts from here
+# Planned to add changes -
+# - Remove item from Ignore Channnel list
+#   - Mention channel or use just command to add the current channel
+# - Add/Remove Ignore Roles
+#   - Have to always mention the role
+
+# To add channel to ignore list.
+@client.command(name='schadd')
+async def schadd(ctx):
+    if await athchk(ctx):
+        return
+    channel_add_status = server_settings.add_ignore_channels(f'Server_Settings/{ctx.message.guild.id}.json', {'channel_id': ctx.message.channel_mentions[0].id})
+    return channel_add_status
+
+
+# To add role to ignore list.
+@client.command(name='sradd')
+async def sradd(ctx):
+    if await athchk(ctx):
+        return
+    role_add_status = server_settings.add_ignore_roles(f'Server_Settings/{ctx.message.guild.id}.json', {'role_id': ""})  # Still finding a way to implement this.
+    return role_add_status
+
+
 # @client.event() to call the reaction element and then get the payload from that message with reaction to make actions on that message.
 
 # Event listener starts from here
+
+# Used to check if sent message is a bot command or not.
 def is_command(msg):
     bot_commands = ('&wfcheck', '&wfadd', '&wfdelete')
     if any(msg.startswith(i) for i in bot_commands):  # any can be used as a or operator
@@ -119,9 +154,12 @@ async def msg_check(message):
     author = message.author
     msg = message.content.split()  # Splitting the words in a message to check if the word is present in the message.
     try:
+        get_all_roles = message.author.roles  # getting all roles of author as object in form of list
+        for i in get_all_roles:
+            rid = i.id  # This worked, work in progress
         if is_command(message.content):
             return
-        if message.author == client.user:
+        if message.channel.id == 936328546887032914:  # This worked, work in progress
             return
         filename = f"Server_Files/{server_id}.json"
         with open(filename) as data_reading:
@@ -130,11 +168,33 @@ async def msg_check(message):
             for item in server_data[key]:
                 if item in msg:
                     await message.delete()
-                    await channel.send(f'{author.mention}, That word is banned!')
+                    msg = await channel.send(f'{author.mention}, That word is banned!')
     except discord.Forbidden:  # If the bot does not have enough permissions to delete the message.
         await channel.send("I do not have enough permission to delete messages!")
     except Exception:
-        await channel.send("I ran into some error! I was unable to delete that message!")
+        msg = await channel.send("I ran into some error! I was unable to delete that message!")
+        await msg.add_reaction("🪄")
+
+
+# Help command in the bot
+@client.command(name='help')
+async def helps(ctx):
+    if await athchk(ctx):
+        return
+    hlp_cmd = None
+    args = ctx.message.content.split(' ')
+    try:
+        if len(args) > 1:
+            hlp_cmd = args[-1]
+        if not hlp_cmd:
+            msg = help_commands.help_cmd()
+            await ctx.channel.send(embed=msg)
+        else:
+            msg = help_commands.help_cmd(args)
+            await ctx.channel.send(embed=msg)
+    except Exception:
+        msg = await ctx.channel.send("I ran into some error! I was unable to delete that message!")
+    await msg.add_reaction("🪄")
 
 # To add:
 # - Feature to add/remove combination of special letter from JSON file

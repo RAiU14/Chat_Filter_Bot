@@ -8,3 +8,5 @@ import csv
 import json
 
 import words
+import server_settings
+import help_commands
