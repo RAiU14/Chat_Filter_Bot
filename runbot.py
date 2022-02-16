@@ -116,21 +116,55 @@ async def wfdelete(ctx):
 #   - Have to always mention the role
 
 # To add channel to ignore list.
-@client.command(name='schadd')
-async def schadd(ctx):
+@client.command(name='ichadd')
+async def ichadd(ctx):
     if await athchk(ctx):
         return
-    channel_add_status = server_settings.add_ignore_channels(f'Server_Settings/{ctx.message.guild.id}.json', {'channel_id': ctx.message.channel_mentions[0].id})
-    return channel_add_status
+    if len(ctx.message.content.split(' ')) == 1:
+        channel_add_status = server_settings.add_ignore_channels(f'Server_Settings/{ctx.message.guild.id}.json', [ctx.message.channel])
+    else:
+        channel_add_status = server_settings.add_ignore_channels(f'Server_Settings/{ctx.message.guild.id}.json', ctx.message.channel_mentions)
+    msg = await ctx.reply(embed=channel_add_status)
+    await msg.add_reaction("🪄")
+
+
+# Delete channels from ignore list
+@client.command(name='delich')
+async def delich(ctx):
+    if await athchk(ctx):
+        return
+    if len(ctx.message.content.split(' ')) == 1:
+        def check(message):  # Checking if the author was the same one who triggered the message and if it is in the same channel.
+            return (message.author == ctx.message.author) and (message.channel == ctx.message.channel)
+        confirmation_embed = discord.Embed(title="Confirmation", description="You are about to clear the complete ignore channel list of this server", colour=discord.Colour.orange())
+        confirmation_embed.add_field(name="To Confirm", value="Type `Yes`/`yes`/`Y`/`y`", inline=True)
+        confirmation_embed.add_field(name="To Cancel", value="Type `No`/`no`/`N`/`n`", inline=True)
+        confirmation_embed.set_footer(text="Default time out in 30 seconds!⏱️")
+        msg = await ctx.message.channel.send(embed=confirmation_embed)
+        await msg.add_reaction("🪄")
+        try:
+            user_response = await client.wait_for('message', check=check, timeout=30)
+            if user_response.content in ('Yes', 'yes', 'y', 'Y'):
+                delete_status = server_settings.del_ingored_channel(f'Server_Settings/{ctx.message.guild.id}.json')
+                msg = await ctx.message.channel.send(embed=delete_status)
+            else:
+                msg = await ctx.message.channel.send("That was close!")
+        except asyncio.TimeoutError:
+            msg = await ctx.message.channel.send("You missed the window!\nExiting Menu..")
+    else:
+        delete_status = server_settings.del_ingored_channel(f'Server_Settings/{ctx.message.guild.id}.json', ctx.message.channel_mentions)
+        msg = await ctx.reply(embed=delete_status)
+    await msg.add_reaction("🪄")
 
 
 # To add role to ignore list.
-@client.command(name='sradd')
-async def sradd(ctx):
+@client.command(name='iradd')
+async def iradd(ctx):
     if await athchk(ctx):
         return
-    role_add_status = server_settings.add_ignore_roles(f'Server_Settings/{ctx.message.guild.id}.json', {'role_id': ""})  # Still finding a way to implement this.
-    return role_add_status
+    # ctx.message.role_mentions returns a list of objects of mentioned channel. Will return uniquiely mentioned channels only.
+    # role_add_status = server_settings.add_ignore_roles(f'Server_Settings/{ctx.message.guild.id}.json', {'role_id': ctx.message.role_mentions[0].id})  # Still finding a way to implement this.
+    # return role_add_status
 
 
 # @client.event() to call the reaction element and then get the payload from that message with reaction to make actions on that message.

@@ -81,7 +81,7 @@ def json_file_read_word(filename: str, word=None):
                                           colour=discord.Color.red())
                 return embed
     except Exception:
-        embed = discord.Embed(title="Oops!", description="Some error occured, try again!",
+        embed = discord.Embed(title="Oops!", description="Some error occured, try again maybe?",
                               color=discord.Color.red())
         return embed
 
@@ -108,6 +108,6 @@ def json_word_delete(filename: str, word=None):
                                   colour=discord.Color.green())
             return embed
     except Exception:
-        embed = discord.Embed(title="Oops!", description="Some error occured, try again!",
+        embed = discord.Embed(title="Oops!", description="Some error occured, try again maybe?",
                               color=discord.Color.red())
         return embed
